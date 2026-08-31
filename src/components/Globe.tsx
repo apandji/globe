@@ -24,8 +24,6 @@ export function Globe({ pins, focusPinId, onMapClick }: GlobeProps) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    let cancelled = false
-
     try {
       mapboxgl.accessToken = getMapboxToken()
     } catch (err) {
@@ -75,14 +73,13 @@ export function Globe({ pins, focusPinId, onMapClick }: GlobeProps) {
     })
 
     mapRef.current = map
+    const markers = markersRef.current
 
     return () => {
-      cancelled = true
-      markersRef.current.forEach((marker) => marker.remove())
-      markersRef.current.clear()
+      markers.forEach((marker) => marker.remove())
+      markers.clear()
       map.remove()
       mapRef.current = null
-      void cancelled
     }
   }, [])
 

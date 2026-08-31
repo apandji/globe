@@ -16,12 +16,7 @@ export function SearchBar({ onSelect }: SearchBarProps) {
 
   useEffect(() => {
     const trimmed = query.trim()
-    if (trimmed.length < 2) {
-      setSuggestions([])
-      setLoading(false)
-      setError(null)
-      return
-    }
+    if (trimmed.length < 2) return
 
     const controller = new AbortController()
     const timer = window.setTimeout(async () => {
@@ -45,6 +40,8 @@ export function SearchBar({ onSelect }: SearchBarProps) {
       window.clearTimeout(timer)
     }
   }, [query])
+
+  const visibleSuggestions = query.trim().length < 2 ? [] : suggestions
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -73,7 +70,7 @@ export function SearchBar({ onSelect }: SearchBarProps) {
         className="search__input"
         type="search"
         role="combobox"
-        aria-expanded={open && suggestions.length > 0}
+        aria-expanded={open && visibleSuggestions.length > 0}
         aria-controls={listId}
         aria-autocomplete="list"
         placeholder="City, address, or place"
@@ -81,15 +78,15 @@ export function SearchBar({ onSelect }: SearchBarProps) {
         autoComplete="off"
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => {
-          if (suggestions.length > 0) setOpen(true)
+          if (visibleSuggestions.length > 0) setOpen(true)
         }}
       />
       <div className="search__meta" aria-live="polite">
         {loading ? 'Searching…' : error ? error : '\u00A0'}
       </div>
-      {open && suggestions.length > 0 && (
+      {open && visibleSuggestions.length > 0 && (
         <ul id={listId} className="search__results" role="listbox">
-          {suggestions.map((suggestion) => (
+          {visibleSuggestions.map((suggestion) => (
             <li key={suggestion.id} role="option">
               <button
                 type="button"
