@@ -155,17 +155,15 @@ function getCursorViewportPoint(
   event: mapboxgl.MapMouseEvent,
   container: HTMLDivElement | null,
 ) {
-  const original = event.originalEvent
+  const original = event.originalEvent as MouseEvent | TouchEvent
 
   if ('clientX' in original) {
     return { x: original.clientX, y: original.clientY }
   }
 
-  if ('touches' in original && original.touches[0]) {
-    return {
-      x: original.touches[0].clientX,
-      y: original.touches[0].clientY,
-    }
+  const touch = original.touches[0] ?? original.changedTouches[0]
+  if (touch) {
+    return { x: touch.clientX, y: touch.clientY }
   }
 
   const rect = container?.getBoundingClientRect()
