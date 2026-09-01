@@ -2,8 +2,13 @@ import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import confetti from 'canvas-confetti'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { pinsToGeoJSON } from '../lib/geojson'
 import { getMapboxToken } from '../lib/geocoding'
 import type { Pin } from '../types'
+
+const PINS_SOURCE = 'pins'
+const PINS_CIRCLE_LAYER = 'pins-circle'
+const PINS_LABEL_LAYER = 'pins-label'
 
 type GlobeProps = {
   pins: Pin[]
@@ -15,7 +20,9 @@ type GlobeProps = {
 export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
-  const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map())
+  const pinsRef = useRef(pins)
+  const layersReadyRef = useRef(false)
+  const hoveredPinIdRef = useRef<string | null>(null)
   const onMapClickRef = useRef(onMapClick)
   const onPinDeleteRef = useRef(onPinDelete)
 
@@ -26,6 +33,10 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
   useEffect(() => {
     onPinDeleteRef.current = onPinDelete
   }, [onPinDelete])
+
+  useEffect(() => {
+    pinsRef.current = pins
+  }, [pins])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -48,6 +59,104 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
 
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right')
 
+    const setupPinLayers = () => {
+      if (layersReadyRef.current) return
+
+      map.addSource(PINS_SOURCE, {
+        type: 'geojson',
+        data: pinsToGeoJSON([]),
+        promoteId: 'id',
+      })
+
+      map.addLayer({
+        id: PINS_CIRCLE_LAYER,
+        type: 'circle',
+        source: PINS_SOURCE,
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            1,
+            9,
+            4,
+            12,
+            8,
+            14,
+          ],
+          'circle-color': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false],
+            '#b42318',
+            '#111111',
+          ],
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#111111',
+          'circle-pitch-alignment': 'map',
+          'circle-pitch-scale': 'map',
+        },
+      })
+
+      map.addLayer({
+        id: PINS_LABEL_LAYER,
+        type: 'symbol',
+        source: PINS_SOURCE,
+        layout: {
+          'text-field': ['to-string', ['get', 'order']],
+          'text-size': 12,
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+          'text-pitch-alignment': 'map',
+          'text-rotation-alignment': 'map',
+        },
+        paint: {
+          'text-color': '#ffffff',
+        },
+      })
+
+      map.on('mouseenter', PINS_CIRCLE_LAYER, () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+
+      map.on('mousemove', PINS_CIRCLE_LAYER, (event) => {
+        const id = event.features?.[0]?.properties?.id as string | undefined
+        if (!id || hoveredPinIdRef.current === id) return
+
+        if (hoveredPinIdRef.current) {
+          map.setFeatureState(
+            { source: PINS_SOURCE, id: hoveredPinIdRef.current },
+            { hover: false },
+          )
+        }
+
+        hoveredPinIdRef.current = id
+        map.setFeatureState({ source: PINS_SOURCE, id }, { hover: true })
+      })
+
+      map.on('mouseleave', PINS_CIRCLE_LAYER, () => {
+        map.getCanvas().style.cursor = ''
+
+        if (hoveredPinIdRef.current) {
+          map.setFeatureState(
+            { source: PINS_SOURCE, id: hoveredPinIdRef.current },
+            { hover: false },
+          )
+          hoveredPinIdRef.current = null
+        }
+      })
+
+      map.on('click', PINS_CIRCLE_LAYER, (event) => {
+        const id = event.features?.[0]?.properties?.id as string | undefined
+        if (id) onPinDeleteRef.current?.(id)
+      })
+
+      layersReadyRef.current = true
+
+      const source = map.getSource(PINS_SOURCE) as mapboxgl.GeoJSONSource
+      source.setData(pinsToGeoJSON(pinsRef.current))
+    }
+
     map.on('style.load', () => {
       map.setFog({
         color: 'rgb(248, 248, 248)',
@@ -56,11 +165,18 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
         'space-color': 'rgb(248, 248, 248)',
         'star-intensity': 0,
       })
+      setupPinLayers()
     })
 
-    map.on('click', (e) => {
-      const { x, y } = e.point
-      const cursor = getCursorViewportPoint(e, containerRef.current)
+    map.on('click', (event) => {
+      const hitPin = map.queryRenderedFeatures(event.point, {
+        layers: [PINS_CIRCLE_LAYER],
+      }).length
+
+      if (hitPin > 0) return
+
+      const { x, y } = event.point
+      const cursor = getCursorViewportPoint(event, containerRef.current)
 
       confetti({
         particleCount: 64,
@@ -76,15 +192,14 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
         },
       })
 
-      onMapClickRef.current?.(e.lngLat.lng, e.lngLat.lat, { x, y })
+      onMapClickRef.current?.(event.lngLat.lng, event.lngLat.lat, { x, y })
     })
 
     mapRef.current = map
-    const markers = markersRef.current
 
     return () => {
-      markers.forEach((marker) => marker.remove())
-      markers.clear()
+      layersReadyRef.current = false
+      hoveredPinIdRef.current = null
       map.remove()
       mapRef.current = null
     }
@@ -92,46 +207,10 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map) return
+    if (!map || !layersReadyRef.current) return
 
-    const existing = markersRef.current
-    const nextIds = new Set(pins.map((p) => p.id))
-
-    existing.forEach((marker, id) => {
-      if (!nextIds.has(id)) {
-        marker.remove()
-        existing.delete(id)
-      }
-    })
-
-    pins.forEach((pin, index) => {
-      let marker = existing.get(pin.id)
-      if (!marker) {
-        const el = document.createElement('button')
-        el.type = 'button'
-        el.className = 'map-pin'
-        el.setAttribute('aria-label', `Remove pin ${pin.name}`)
-        el.title = 'Click to remove'
-        el.innerHTML = `<span class="map-pin__index">${index + 1}</span>`
-
-        el.addEventListener('click', (event) => {
-          event.stopPropagation()
-          onPinDeleteRef.current?.(pin.id)
-        })
-
-        marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat([pin.lng, pin.lat])
-          .addTo(map)
-
-        existing.set(pin.id, marker)
-      } else {
-        marker.setLngLat([pin.lng, pin.lat])
-        const el = marker.getElement()
-        el.setAttribute('aria-label', `Remove pin ${pin.name}`)
-        const indexEl = el.querySelector('.map-pin__index')
-        if (indexEl) indexEl.textContent = String(index + 1)
-      }
-    })
+    const source = map.getSource(PINS_SOURCE) as mapboxgl.GeoJSONSource | undefined
+    source?.setData(pinsToGeoJSON(pins))
   }, [pins])
 
   useEffect(() => {

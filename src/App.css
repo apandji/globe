@@ -338,42 +338,6 @@
   color: var(--surface);
 }
 
-/* Map markers */
-.map-pin {
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0;
-  border: 1px solid #111;
-  border-radius: 999px;
-  background: #111;
-  color: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-  cursor: pointer;
-  transition:
-    background 140ms ease,
-    border-color 140ms ease,
-    transform 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.map-pin:hover,
-.map-pin:focus-visible {
-  background: #b42318;
-  border-color: #b42318;
-  transform: scale(1.12);
-  box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.25);
-}
-
-.map-pin__index {
-  font-family: var(--font);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
-  pointer-events: none;
-}
-
 .map-attribution {
   position: absolute;
   left: 0.65rem;
