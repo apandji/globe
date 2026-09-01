@@ -60,8 +60,7 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
 
     map.on('click', (e) => {
       const { x, y } = e.point
-      const originX = x / window.innerWidth
-      const originY = y / window.innerHeight
+      const cursor = getCursorViewportPoint(e, containerRef.current)
 
       confetti({
         particleCount: 64,
@@ -71,7 +70,10 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
         ticks: 140,
         scalar: 0.9,
         colors: ['#111111', '#ffffff', '#888888', '#dddddd'],
-        origin: { x: originX, y: originY },
+        origin: {
+          x: cursor.x / window.innerWidth,
+          y: cursor.y / window.innerHeight,
+        },
       })
 
       onMapClickRef.current?.(e.lngLat.lng, e.lngLat.lat, { x, y })
@@ -147,4 +149,32 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
   }, [focusPinId, pins])
 
   return <div ref={containerRef} className="globe" role="presentation" />
+}
+
+function getCursorViewportPoint(
+  event: mapboxgl.MapMouseEvent,
+  container: HTMLDivElement | null,
+) {
+  const original = event.originalEvent
+
+  if ('clientX' in original) {
+    return { x: original.clientX, y: original.clientY }
+  }
+
+  if ('touches' in original && original.touches[0]) {
+    return {
+      x: original.touches[0].clientX,
+      y: original.touches[0].clientY,
+    }
+  }
+
+  const rect = container?.getBoundingClientRect()
+  if (rect) {
+    return {
+      x: rect.left + event.point.x,
+      y: rect.top + event.point.y,
+    }
+  }
+
+  return { x: window.innerWidth / 2, y: window.innerHeight / 2 }
 }
