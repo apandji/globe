@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Globe } from './components/Globe'
+import { GeoJsonPanel } from './components/GeoJsonPanel'
 import { PinList } from './components/PinList'
 import { SearchBar } from './components/SearchBar'
 import { usePins } from './hooks/usePins'
@@ -109,6 +110,8 @@ function App() {
             onFocus={(id) => setFocusKey(`id:${id}`)}
           />
         </section>
+
+        <GeoJsonPanel pins={pins} />
       </aside>
 
       <main className="stage">
