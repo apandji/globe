@@ -120,7 +120,8 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
       })
 
       map.on('mousemove', PINS_CIRCLE_LAYER, (event) => {
-        const id = event.features?.[0]?.properties?.id as string | undefined
+        const feature = event.features?.[0] as mapboxgl.MapboxGeoJSONFeature | undefined
+        const id = feature?.properties?.id as string | undefined
         if (!id || hoveredPinIdRef.current === id) return
 
         if (hoveredPinIdRef.current) {
@@ -147,7 +148,8 @@ export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps)
       })
 
       map.on('click', PINS_CIRCLE_LAYER, (event) => {
-        const id = event.features?.[0]?.properties?.id as string | undefined
+        const feature = event.features?.[0] as mapboxgl.MapboxGeoJSONFeature | undefined
+        const id = feature?.properties?.id as string | undefined
         if (id) onPinDeleteRef.current?.(id)
       })
 
