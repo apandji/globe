@@ -44,6 +44,10 @@ export function usePins() {
     setPins((prev) => prev.filter((p) => p.id !== id))
   }, [])
 
+  const clearPins = useCallback(() => {
+    setPins([])
+  }, [])
+
   const reorderPins = useCallback((fromIndex: number, toIndex: number) => {
     setPins((prev) => {
       if (
@@ -62,5 +66,5 @@ export function usePins() {
     })
   }, [])
 
-  return { pins, addPin, addPinFromCoords, removePin, reorderPins }
+  return { pins, addPin, addPinFromCoords, removePin, clearPins, reorderPins }
 }

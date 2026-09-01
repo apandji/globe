@@ -7,7 +7,7 @@ import { reverseGeocode, type GeocodeSuggestion } from './lib/geocoding'
 import './App.css'
 
 function App() {
-  const { pins, addPin, addPinFromCoords, removePin, reorderPins } = usePins()
+  const { pins, addPin, addPinFromCoords, removePin, clearPins, reorderPins } = usePins()
   const [focusKey, setFocusKey] = useState<string | null>(null)
   const [tokenMissing] = useState(
     () =>
@@ -84,13 +84,24 @@ function App() {
       <aside className="panel">
         <header className="panel__header">
           <p className="brand">Globe Pins</p>
-          <p className="lede">Search places, pin them, reorder the list.</p>
+          <p className="lede">Search to pin. Click the globe to add. Click a pin to remove.</p>
         </header>
 
         <SearchBar onSelect={onSelect} />
 
         <section className="panel__pins" aria-label="Pinned locations">
-          <h2 className="panel__section-title">Pinned</h2>
+          <div className="panel__pins-header">
+            <h2 className="panel__section-title">Pinned</h2>
+            {pins.length > 0 && (
+              <button
+                type="button"
+                className="panel__clear"
+                onClick={clearPins}
+              >
+                Delete all
+              </button>
+            )}
+          </div>
           <PinList
             pins={pins}
             onDelete={removePin}
@@ -105,7 +116,20 @@ function App() {
           pins={pins}
           focusPinId={focusPinId}
           onMapClick={handleMapClick}
+          onPinDelete={removePin}
         />
+        <div className="map-attribution">
+          <a href="https://www.mapbox.com/" target="_blank" rel="noreferrer">
+            © Mapbox
+          </a>
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noreferrer"
+          >
+            © OpenStreetMap
+          </a>
+        </div>
       </main>
     </div>
   )

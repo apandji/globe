@@ -9,17 +9,23 @@ type GlobeProps = {
   pins: Pin[]
   focusPinId?: string | null
   onMapClick?: (lng: number, lat: number, point: { x: number; y: number }) => void
+  onPinDelete?: (id: string) => void
 }
 
-export function Globe({ pins, focusPinId, onMapClick }: GlobeProps) {
+export function Globe({ pins, focusPinId, onMapClick, onPinDelete }: GlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map())
   const onMapClickRef = useRef(onMapClick)
+  const onPinDeleteRef = useRef(onPinDelete)
 
   useEffect(() => {
     onMapClickRef.current = onMapClick
   }, [onMapClick])
+
+  useEffect(() => {
+    onPinDeleteRef.current = onPinDelete
+  }, [onPinDelete])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -41,15 +47,14 @@ export function Globe({ pins, focusPinId, onMapClick }: GlobeProps) {
     })
 
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'bottom-right')
-    map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left')
 
     map.on('style.load', () => {
       map.setFog({
-        color: 'rgb(250, 250, 250)',
-        'high-color': 'rgb(220, 220, 220)',
-        'horizon-blend': 0.02,
-        'space-color': 'rgb(18, 18, 18)',
-        'star-intensity': 0.4,
+        color: 'rgb(248, 248, 248)',
+        'high-color': 'rgb(248, 248, 248)',
+        'horizon-blend': 0.004,
+        'space-color': 'rgb(248, 248, 248)',
+        'star-intensity': 0,
       })
     })
 
@@ -103,22 +108,25 @@ export function Globe({ pins, focusPinId, onMapClick }: GlobeProps) {
         const el = document.createElement('button')
         el.type = 'button'
         el.className = 'map-pin'
-        el.setAttribute('aria-label', pin.name)
+        el.setAttribute('aria-label', `Remove pin ${pin.name}`)
+        el.title = 'Click to remove'
         el.innerHTML = `<span class="map-pin__index">${index + 1}</span>`
+
+        el.addEventListener('click', (event) => {
+          event.stopPropagation()
+          onPinDeleteRef.current?.(pin.id)
+        })
 
         marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
           .setLngLat([pin.lng, pin.lat])
-          .setPopup(
-            new mapboxgl.Popup({ offset: 18, closeButton: false }).setHTML(
-              `<strong>${escapeHtml(pin.name)}</strong><div>${escapeHtml(pin.placeName)}</div>`,
-            ),
-          )
           .addTo(map)
 
         existing.set(pin.id, marker)
       } else {
         marker.setLngLat([pin.lng, pin.lat])
-        const indexEl = marker.getElement().querySelector('.map-pin__index')
+        const el = marker.getElement()
+        el.setAttribute('aria-label', `Remove pin ${pin.name}`)
+        const indexEl = el.querySelector('.map-pin__index')
         if (indexEl) indexEl.textContent = String(index + 1)
       }
     })
@@ -139,12 +147,4 @@ export function Globe({ pins, focusPinId, onMapClick }: GlobeProps) {
   }, [focusPinId, pins])
 
   return <div ref={containerRef} className="globe" role="presentation" />
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
 }

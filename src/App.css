@@ -36,12 +36,36 @@
 }
 
 .panel__section-title {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: var(--text-xs);
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.panel__pins-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.panel__clear {
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.panel__clear:hover,
+.panel__clear:focus-visible {
+  color: #b42318;
 }
 
 .panel__pins {
@@ -52,7 +76,7 @@
 .stage {
   position: relative;
   min-height: 420px;
-  background: #121212;
+  background: #f8f8f8;
 }
 
 .globe {
@@ -264,10 +288,23 @@
   padding: 0;
   border: 1px solid #111;
   border-radius: 999px;
-  background: #fff;
-  color: #111;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+  background: #111;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
   cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.map-pin:hover,
+.map-pin:focus-visible {
+  background: #b42318;
+  border-color: #b42318;
+  transform: scale(1.12);
+  box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.25);
 }
 
 .map-pin__index {
@@ -275,26 +312,46 @@
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1;
+  pointer-events: none;
+}
+
+.map-attribution {
+  position: absolute;
+  left: 0.65rem;
+  bottom: 0.55rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.6875rem;
+  color: #666;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+}
+
+.map-attribution a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.map-attribution a:hover,
+.map-attribution a:focus-visible {
+  color: #111;
+  text-decoration: underline;
 }
 
 .mapboxgl-popup-content {
-  font-family: var(--font);
-  font-size: 0.8125rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 0;
-  box-shadow: none;
-  border: 1px solid #111;
-  color: #111;
-}
-
-.mapboxgl-popup-content strong {
-  display: block;
-  font-weight: 560;
-  margin-bottom: 0.15rem;
+  display: none;
 }
 
 .mapboxgl-popup-tip {
-  border-top-color: #111 !important;
+  display: none;
+}
+
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  z-index: 1;
 }
 
 .mapboxgl-ctrl-group {
