@@ -13,7 +13,7 @@ export type GeocodeSuggestion = {
 export function getMapboxToken(): string {
   if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes('your_mapbox_token')) {
     throw new Error(
-      'Missing VITE_MAPBOX_TOKEN. Copy .env.example to .env and add your Mapbox token.',
+      'Missing Mapbox token. Set VITE_MAPBOX_TOKEN (local) or MAPBOX_TOKEN (Vercel) in your environment.',
     )
   }
   return MAPBOX_TOKEN

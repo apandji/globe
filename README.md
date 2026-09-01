@@ -29,6 +29,12 @@ cp .env.example .env
 VITE_MAPBOX_TOKEN=pk.your_token_here
 ```
 
+On Vercel, use `MAPBOX_TOKEN` instead (Vercel blocks `VITE_` as a sensitive variable).
+
+```env
+MAPBOX_TOKEN=pk.your_token_here
+```
+
 3. Start the dev server:
 
 ```bash

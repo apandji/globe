@@ -61,7 +61,8 @@ function App() {
         <p className="brand">Globe Pins</p>
         <p>
           Add your Mapbox access token to <code>.env</code> as{' '}
-          <code>VITE_MAPBOX_TOKEN</code>, then restart the dev server.
+          <code>VITE_MAPBOX_TOKEN</code> (local) or set{' '}
+          <code>MAPBOX_TOKEN</code> on Vercel, then restart the dev server.
         </p>
         <p>
           Copy <code>.env.example</code> → <code>.env</code>. Create a token at{' '}
